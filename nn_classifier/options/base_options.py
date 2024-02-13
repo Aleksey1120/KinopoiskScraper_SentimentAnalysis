@@ -18,6 +18,7 @@ class BaseOptions:
         parser.add_argument('--batch_size', type=int, default=16, help='Batch size')
         parser.add_argument('--max_length', type=int, default=512,
                             help='Max sequence length')
+        parser.add_argument('--metrics', nargs='+', default=['loss'], help='Tracked metrics')
         parser.add_argument('--cuda', action='store_true', help='Use cuda if available')
 
         return parser

@@ -35,7 +35,6 @@ class TrainOptions(BaseOptions):
         parser.add_argument(
             '--validate_data', type=str, required=True, help='Validate dataset path'
         )
-        parser.add_argument('--metrics', nargs='+', default=['loss'], help='Tracked metrics')
 
         parser.add_argument('--lr', default=1e-6, type=float, help='Learning rate')
         return parser
