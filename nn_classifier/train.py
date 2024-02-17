@@ -125,7 +125,8 @@ def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, loss_f
 
 
 def main():
-    opt = TrainOptions().get_options()
+    train_options = TrainOptions()
+    opt = train_options.get_options()
     set_seed(opt.seed)
 
     device = torch.device('cuda' if torch.cuda.is_available() and opt.cuda else 'cpu')
@@ -133,8 +134,8 @@ def main():
     model, tokenizer = get_model_and_tokenizer(opt.model_name_or_path, cache_dir=opt.cache_dir)
     loss_function = nn.CrossEntropyLoss()
 
-    train_df = pd.read_csv(opt.train_data).head(1000)
-    validate_df = pd.read_csv(opt.validate_data).head(250)
+    train_df = pd.read_csv(opt.train_data)
+    validate_df = pd.read_csv(opt.validate_data)
 
     train_dataset = TrainDataset(train_df['review_text'], train_df['review_type'], tokenizer, opt.max_length)
     validate_dataset = TrainDataset(validate_df['review_text'], validate_df['review_type'], tokenizer, opt.max_length)
@@ -152,6 +153,7 @@ def main():
         print(f'Start {opt.model_comment} fitting. '
               f'Train size: {train_df.shape[0]} '
               f'Validate size: {validate_df.shape[0]}')
+        train_options.print_options()
     train(opt, model, train_fetcher, valid_loader, optimizer, loss_function, device)
 
 

@@ -34,4 +34,7 @@ class BaseOptions:
     def get_options(self):
         return self.options
 
-    # TODO: add print_options func
+    def print_options(self):
+        print('       Option               Value        ')
+        for k, v in self.options.__dict__.items():
+            print(f'{k:<20}{str(v):<21}')
