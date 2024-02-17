@@ -20,6 +20,11 @@ class BaseOptions:
                             help='Max sequence length')
         parser.add_argument('--metrics', nargs='+', default=['loss'], help='Tracked metrics')
         parser.add_argument('--cuda', action='store_true', help='Use cuda if available')
+        parser.add_argument(
+            '--fp16',
+            action='store_true',
+            help='Use mixed precision',
+        )
 
         return parser
 

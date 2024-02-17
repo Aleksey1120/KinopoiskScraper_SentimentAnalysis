@@ -24,7 +24,8 @@ def set_seed(seed):
     torch.manual_seed(seed)
 
 
-def train_step(model, optimizer, loss_function, batch, device):
+def train_step(model, optimizer, loss_function, batch, device, fp16):
+    scaler = torch.cuda.amp.GradScaler()
     model.train()
     optimizer.zero_grad()
 
@@ -34,15 +35,22 @@ def train_step(model, optimizer, loss_function, batch, device):
     train_label = train_label.to(device)
     train_label = torch.zeros(train_label.shape[0],
                               3, device=device).scatter_(1, train_label.unsqueeze(1).type(torch.int64), 1.0)
-    output = model(input_id, attention_mask=mask).logits
-    batch_loss = loss_function(output, train_label)
 
-    batch_loss.backward()
-    optimizer.step()
+    with torch.cuda.amp.autocast(enabled=fp16, dtype=torch.float16):
+        output = model(input_id, attention_mask=mask).logits
+        batch_loss = loss_function(output, train_label)
+
+    if fp16:
+        scaler.scale(batch_loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
+    else:
+        batch_loss.backward()
+        optimizer.step()
     return batch_loss.cpu().detach(), output.cpu().detach(), train_label.cpu().detach()
 
 
-def validate_step(model, loss_function, batch, device):
+def validate_step(model, loss_function, batch, device, fp16):
     with torch.no_grad():
         model.eval()
         input_id, mask, val_label = batch
@@ -51,8 +59,9 @@ def validate_step(model, loss_function, batch, device):
         val_label = val_label.to(device)
         val_label = torch.zeros(val_label.shape[0], 3,
                                 device=device).scatter_(1, val_label.unsqueeze(1).type(torch.int64), 1.0)
-        output = model(input_id, attention_mask=mask).logits
-        batch_loss = loss_function(output, val_label)
+        with torch.cuda.amp.autocast(enabled=fp16, dtype=torch.float16):
+            output = model(input_id, attention_mask=mask).logits
+            batch_loss = loss_function(output, val_label)
     return batch_loss.cpu().detach(), output.cpu().detach(), val_label.cpu().detach()
 
 
@@ -86,7 +95,8 @@ def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, loss_f
 
     for iter_number in range(opt.niter):
         train_batch = train_fetcher.load()
-        train_loss, train_output, train_label = train_step(model, optimizer, loss_function, train_batch, device)
+        train_loss, train_output, train_label = train_step(model, optimizer, loss_function, train_batch, device,
+                                                           opt.fp16)
         train_metrics.append(train_loss, train_output, train_label)
 
         if (iter_number + 1) % opt.save_every == 0:
@@ -97,7 +107,7 @@ def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, loss_f
             validate_metrics = MetricsEvaluator(opt.metrics)
             for validate_batch in validate_loader:
                 validate_loss, validate_output, validate_label = validate_step(model, loss_function, validate_batch,
-                                                                               device)
+                                                                               device, opt.fp16)
                 validate_metrics.append(validate_loss, validate_output, validate_label)
 
             print_epoch_metrics(iter_number + 1 - opt.print_every,
