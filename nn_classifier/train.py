@@ -7,6 +7,7 @@ import torch
 from torch import nn
 from torch.optim import Adam
 
+from nn_classifier.early_stopping import EarlyStopping
 from nn_classifier.options.train_options import TrainOptions
 from nn_classifier.model import get_model_and_tokenizer
 from nn_classifier.datasets import TrainDataset, Fetcher
@@ -77,18 +78,23 @@ def print_result_table_headers(required_metrics):
 
 def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, loss_function, device):
     start_time = time.time()
+    early_stopping = EarlyStopping(model, opt)
+    train_metrics = MetricsEvaluator(opt.metrics)
 
     if opt.verbose >= 2:
         print_result_table_headers(opt.metrics)
-    for iter_number in range(opt.niter):
-        train_metrics = MetricsEvaluator(opt.metrics)
-        validate_metrics = MetricsEvaluator(opt.metrics)
 
+    for iter_number in range(opt.niter):
         train_batch = train_fetcher.load()
         train_loss, train_output, train_label = train_step(model, optimizer, loss_function, train_batch, device)
         train_metrics.append(train_loss, train_output, train_label)
 
+        if (iter_number + 1) % opt.save_every == 0:
+            torch.save(model.state_dict(),
+                       os.path.join(opt.output_dir, f'{opt.model_comment}_iter_{iter_number}.bin'))
+
         if opt.verbose >= 2 and (iter_number + 1) % opt.print_every == 0:
+            validate_metrics = MetricsEvaluator(opt.metrics)
             for validate_batch in validate_loader:
                 validate_loss, validate_output, validate_label = validate_step(model, loss_function, validate_batch,
                                                                                device)
@@ -100,10 +106,12 @@ def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, loss_f
                                 train_metrics,
                                 validate_metrics)
             start_time = time.time()
+            train_metrics = MetricsEvaluator(opt.metrics)
 
-        if (iter_number + 1) % opt.save_every == 0:
-            torch.save(model.state_dict(),
-                       os.path.join(opt.output_dir, f'{opt.model_comment}_iter_{iter_number}.bin'))
+            if early_stopping(validate_metrics):
+                break
+
+    early_stopping.rename_file()
 
 
 def main():
@@ -115,8 +123,8 @@ def main():
     model, tokenizer = get_model_and_tokenizer(opt.model_name_or_path, cache_dir=opt.cache_dir)
     loss_function = nn.CrossEntropyLoss()
 
-    train_df = pd.read_csv(opt.train_data)
-    validate_df = pd.read_csv(opt.validate_data)
+    train_df = pd.read_csv(opt.train_data).head(1000)
+    validate_df = pd.read_csv(opt.validate_data).head(250)
 
     train_dataset = TrainDataset(train_df['review_text'], train_df['review_type'], tokenizer, opt.max_length)
     validate_dataset = TrainDataset(validate_df['review_text'], validate_df['review_type'], tokenizer, opt.max_length)

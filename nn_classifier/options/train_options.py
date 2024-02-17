@@ -20,6 +20,8 @@ class TrainOptions(BaseOptions):
         )
         parser.add_argument('--niter', type=int, default=1000,
                             help='Maximum number of iters')
+        parser.add_argument('--early_stop', type=int, default=None,
+                            help='Stop training after n evaluate iters without improvement')
         parser.add_argument('--print_every', type=int, default=100,
                             help='Print every k iters')
         parser.add_argument('--target_metric', type=str, default='loss',
