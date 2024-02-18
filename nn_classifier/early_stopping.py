@@ -18,9 +18,8 @@ class EarlyStopping:
         self.model_comment = options.model_comment
 
     def __call__(self, validate_metrics):
-        computed_metrics = validate_metrics.compute_metrics()
-        if self.comparison_function(computed_metrics[self.target_metric], self.best_value):
-            self.best_value = computed_metrics[self.target_metric]
+        if self.comparison_function(validate_metrics[self.target_metric], self.best_value):
+            self.best_value = validate_metrics[self.target_metric]
             self.trigger_times = 0
             if self.save_best_model:
                 if not os.path.exists(self.output_dir):

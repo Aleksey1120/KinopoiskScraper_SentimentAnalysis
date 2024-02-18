@@ -73,15 +73,13 @@ def validate_step(model, loss_function, batch, device, fp16):
     return batch_loss.cpu().detach(), output.cpu().detach(), val_label.cpu().detach()
 
 
-def print_epoch_metrics(start_iter, end_iter, elapsed_time, train_metrics: MetricsEvaluator,
-                        validate_metrics: MetricsEvaluator):
+def print_epoch_metrics(start_iter, end_iter, elapsed_time, train_metrics,
+                        validate_metrics):
     iters = f'{start_iter} - {end_iter}'
     metric_columns = []
-    computed_train_metrics = train_metrics.compute_metrics()
-    computed_validate_metrics = validate_metrics.compute_metrics()
-    for metric_name in computed_train_metrics.keys():
-        metric_columns.append(f'{computed_train_metrics[metric_name]:^20.3f}|')
-        metric_columns.append(f'{computed_validate_metrics[metric_name]:^20.3f}|')
+    for metric_name in train_metrics.keys():
+        metric_columns.append(f'{train_metrics[metric_name]:^20.3f}|')
+        metric_columns.append(f'{validate_metrics[metric_name]:^20.3f}|')
     print(f'|{iters:^15}|{elapsed_time:^10.2f}|' + ''.join(metric_columns))
 
 
@@ -96,7 +94,7 @@ def print_result_table_headers(required_metrics):
 def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, loss_function, device):
     start_time = time.time()
     early_stopping = EarlyStopping(model, opt)
-    train_metrics = MetricsEvaluator(opt.metrics)
+    train_metrics_evaluator = MetricsEvaluator(opt.metrics)
     if opt.tb_dir is not None:
         train_writer = SummaryWriter(log_dir=os.path.join(opt.tb_dir, opt.tb_comment, 'train'))
         validate_writer = SummaryWriter(log_dir=os.path.join(opt.tb_dir, opt.tb_comment, 'validate'))
@@ -108,29 +106,29 @@ def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, loss_f
         train_batch = train_fetcher.load()
         train_loss, train_output, train_label = train_step(model, optimizer, loss_function, train_batch, device,
                                                            opt.fp16)
-        train_metrics.append(train_loss, train_output, train_label)
+        train_metrics_evaluator.append(train_loss, train_output, train_label)
 
         if (iter_number + 1) % opt.save_every == 0:
             torch.save(model.state_dict(),
                        os.path.join(opt.output_dir, f'{opt.model_comment}_iter_{iter_number}.bin'))
 
         if opt.verbose >= 2 and (iter_number + 1) % opt.print_every == 0:
-            validate_metrics = MetricsEvaluator(opt.metrics)
+            validate_metrics_evaluator = MetricsEvaluator(opt.metrics)
             for validate_batch in validate_loader:
                 validate_loss, validate_output, validate_label = validate_step(model, loss_function, validate_batch,
                                                                                device, opt.fp16)
-                validate_metrics.append(validate_loss, validate_output, validate_label)
-
+                validate_metrics_evaluator.append(validate_loss, validate_output, validate_label)
+            train_metrics = train_metrics_evaluator.compute_metrics()
+            validate_metrics = validate_metrics_evaluator.compute_metrics()
             print_epoch_metrics(iter_number + 1 - opt.print_every,
                                 iter_number,
                                 time.time() - start_time,
                                 train_metrics,
                                 validate_metrics)
             if opt.tb_dir is not None:
-                log_metrics(train_metrics.compute_metrics(), validate_metrics.compute_metrics(),
-                            train_writer, validate_writer, iter_number)
+                log_metrics(train_metrics, validate_metrics, train_writer, validate_writer, iter_number)
             start_time = time.time()
-            train_metrics = MetricsEvaluator(opt.metrics)
+            train_metrics_evaluator = MetricsEvaluator(opt.metrics)
 
             if early_stopping(validate_metrics):
                 break
