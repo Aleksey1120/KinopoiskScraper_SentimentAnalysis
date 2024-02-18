@@ -6,6 +6,7 @@ import pandas as pd
 import torch
 from torch import nn
 from torch.optim import Adam
+from torch.utils.tensorboard import SummaryWriter
 
 from nn_classifier.early_stopping import EarlyStopping
 from nn_classifier.options.train_options import TrainOptions
@@ -22,6 +23,13 @@ def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+
+
+def log_metrics(train_metrics, validate_metrics, train_writer, validate_writer, iter_number):
+    for k, v in train_metrics.items():
+        train_writer.add_scalar(k, v, iter_number + 1)
+    for k, v in validate_metrics.items():
+        validate_writer.add_scalar(k, v, iter_number + 1)
 
 
 def train_step(model, optimizer, loss_function, batch, device, fp16):
@@ -89,6 +97,9 @@ def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, loss_f
     start_time = time.time()
     early_stopping = EarlyStopping(model, opt)
     train_metrics = MetricsEvaluator(opt.metrics)
+    if opt.tb_dir is not None:
+        train_writer = SummaryWriter(log_dir=os.path.join(opt.tb_dir, opt.tb_comment, 'train'))
+        validate_writer = SummaryWriter(log_dir=os.path.join(opt.tb_dir, opt.tb_comment, 'validate'))
 
     if opt.verbose >= 2:
         print_result_table_headers(opt.metrics)
@@ -115,6 +126,9 @@ def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, loss_f
                                 time.time() - start_time,
                                 train_metrics,
                                 validate_metrics)
+            if opt.tb_dir is not None:
+                log_metrics(train_metrics.compute_metrics(), validate_metrics.compute_metrics(),
+                            train_writer, validate_writer, iter_number)
             start_time = time.time()
             train_metrics = MetricsEvaluator(opt.metrics)
 

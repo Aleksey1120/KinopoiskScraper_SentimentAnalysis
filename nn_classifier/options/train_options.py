@@ -1,3 +1,5 @@
+import datetime
+
 from .base_options import BaseOptions
 
 
@@ -37,6 +39,9 @@ class TrainOptions(BaseOptions):
         parser.add_argument(
             '--validate_data', type=str, required=True, help='Validate dataset path'
         )
-
+        parser.add_argument('--tb_dir', type=str, default=None,
+                            help='TensorBoard dir path')
+        parser.add_argument('--tb_comment', type=str, default=datetime.datetime.now().strftime('%d-%m-%y %H.%M'),
+                            help='TensorBoard comment. If not given, current time')
         parser.add_argument('--lr', default=1e-6, type=float, help='Learning rate')
         return parser
