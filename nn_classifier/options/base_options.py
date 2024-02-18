@@ -10,7 +10,8 @@ class BaseOptions:
     def initialize(self, parser):
         parser.add_argument('--model_name_or_path', default=None, type=str, required=True,
                             help='Pretrained model name from Huggingface')
-        parser.add_argument('--model_comment', type=str, required=True, help='Model comment')
+        parser.add_argument('--checkpoint_path', default=None, type=str,
+                            help='Checkpoint path')
         parser.add_argument('--cache_dir', default=None, type=str,
                             help='Directory for saving the pretrained model(None for default)')
         parser.add_argument('--seed', type=int, default=42,

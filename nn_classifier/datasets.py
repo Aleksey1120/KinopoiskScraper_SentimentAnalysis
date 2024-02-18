@@ -1,9 +1,8 @@
 import torch
 
 
-class TrainDataset(torch.utils.data.Dataset):
-    def __init__(self, texts, labels, tokenizer, max_length, balanced=True):
-        self.balanced = balanced
+class LabeledDataset(torch.utils.data.Dataset):
+    def __init__(self, texts, labels, tokenizer, max_length):
         self.labels = labels
         self.texts = texts
         self.tokenizer = tokenizer
@@ -23,9 +22,8 @@ class TrainDataset(torch.utils.data.Dataset):
         return text['input_ids'], text['attention_mask'], label
 
 
-class PredictDataset(torch.utils.data.Dataset):
-    def __init__(self, texts, tokenizer, max_length, balanced=True):
-        self.balanced = balanced
+class InferenceDataset(torch.utils.data.Dataset):
+    def __init__(self, texts, tokenizer, max_length):
         self.texts = texts
         self.tokenizer = tokenizer
         self.max_length = max_length

@@ -33,6 +33,7 @@ class TrainOptions(BaseOptions):
                             help='Save best model')
         parser.add_argument('--save_every', type=int, default=100,
                             help='Save checkpoint every k iters')
+        parser.add_argument('--model_comment', type=str, required=True, help='Model comment')
         parser.add_argument(
             '--train_data', type=str, required=True, help='Train dataset path'
         )
