@@ -4,6 +4,7 @@ import time
 import numpy as np
 import pandas as pd
 import torch
+from sklearn.utils import compute_class_weight
 from torch import nn
 from torch.optim import Adam
 from torch.utils.tensorboard import SummaryWriter
@@ -144,10 +145,13 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() and opt.cuda else 'cpu')
 
     model, tokenizer = get_model_and_tokenizer(opt.model_name_or_path, opt.checkpoint_path, cache_dir=opt.cache_dir)
-    loss_function = nn.CrossEntropyLoss()
 
     train_df = pd.read_csv(opt.train_data)
     validate_df = pd.read_csv(opt.validate_data)
+    class_weights = compute_class_weight('balanced',
+                                         classes=np.unique(train_df['review_type']),
+                                         y=train_df['review_type'])
+    class_weights = torch.tensor(class_weights, dtype=torch.float)
 
     train_dataset = LabeledDataset(train_df['review_text'], train_df['review_type'], tokenizer, opt.max_length)
     validate_dataset = LabeledDataset(validate_df['review_text'], validate_df['review_type'], tokenizer, opt.max_length)
@@ -159,7 +163,7 @@ def main():
 
     model = model.to(device)
     optimizer = Adam(model.parameters(), lr=opt.lr)
-    loss_function = loss_function.to(device)
+    loss_function = nn.CrossEntropyLoss(weight=class_weights if opt.balanced else None).to(device)
 
     if opt.verbose >= 1:
         print(f'Start {opt.model_comment} fitting. '
