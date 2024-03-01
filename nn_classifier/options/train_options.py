@@ -46,4 +46,5 @@ class TrainOptions(BaseOptions):
                             help='TensorBoard comment. If not given, current time')
         parser.add_argument('--lr', default=1e-6, type=float, help='Learning rate')
         parser.add_argument('--balanced', action='store_true', help='Use balanced class weights')
+        parser.add_argument('--use_cache', action='store_true', help='Use tokens caching')
         return parser

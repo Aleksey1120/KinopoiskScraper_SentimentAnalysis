@@ -94,6 +94,7 @@ def print_result_table_headers(required_metrics):
 
 def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, loss_function, device):
     start_time = time.time()
+    iter_start_time = time.time()
     early_stopping = EarlyStopping(model, opt)
     train_metrics_evaluator = MetricsEvaluator(opt.metrics)
     if opt.tb_dir is not None:
@@ -123,18 +124,20 @@ def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, loss_f
             validate_metrics = validate_metrics_evaluator.compute_metrics()
             print_epoch_metrics(iter_number + 1 - opt.print_every,
                                 iter_number,
-                                time.time() - start_time,
+                                time.time() - iter_start_time,
                                 train_metrics,
                                 validate_metrics)
             if opt.tb_dir is not None:
                 log_metrics(train_metrics, validate_metrics, train_writer, validate_writer, iter_number)
-            start_time = time.time()
+            iter_start_time = time.time()
             train_metrics_evaluator = MetricsEvaluator(opt.metrics)
 
             if early_stopping(validate_metrics):
                 break
 
     early_stopping.rename_file()
+    if opt.verbose >= 1:
+        print(f'Total fitting time: {time.time() - start_time:.2f}')
 
 
 def main():
@@ -153,7 +156,11 @@ def main():
                                          y=train_df['review_type'])
     class_weights = torch.tensor(class_weights, dtype=torch.float)
 
-    train_dataset = LabeledDataset(train_df['review_text'], train_df['review_type'], tokenizer, opt.max_length)
+    train_dataset = LabeledDataset(train_df['review_text'],
+                                   train_df['review_type'],
+                                   tokenizer,
+                                   opt.max_length,
+                                   opt.use_cache)
     validate_dataset = LabeledDataset(validate_df['review_text'], validate_df['review_type'], tokenizer, opt.max_length)
 
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True)
