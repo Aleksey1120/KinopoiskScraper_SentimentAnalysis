@@ -45,7 +45,7 @@ def train_step(model, optimizer, loss_function, batch, device, fp16):
     train_label = torch.zeros(train_label.shape[0],
                               3, device=device).scatter_(1, train_label.unsqueeze(1).type(torch.int64), 1.0)
 
-    with torch.cuda.amp.autocast(enabled=fp16, dtype=torch.float16):
+    with torch.cuda.amp.autocast(enabled=fp16):
         output = model(input_id, attention_mask=mask).logits
         batch_loss = loss_function(output, train_label)
 
@@ -59,7 +59,7 @@ def train_step(model, optimizer, loss_function, batch, device, fp16):
     return batch_loss.cpu().detach(), output.cpu().detach(), train_label.cpu().detach()
 
 
-def validate_step(model, loss_function, batch, device, fp16):
+def validate_step(model, loss_function, batch, device):
     with torch.no_grad():
         model.eval()
         input_id, mask, val_label = batch
@@ -68,9 +68,8 @@ def validate_step(model, loss_function, batch, device, fp16):
         val_label = val_label.to(device)
         val_label = torch.zeros(val_label.shape[0], 3,
                                 device=device).scatter_(1, val_label.unsqueeze(1).type(torch.int64), 1.0)
-        with torch.cuda.amp.autocast(enabled=fp16, dtype=torch.float16):
-            output = model(input_id, attention_mask=mask).logits
-            batch_loss = loss_function(output, val_label)
+        output = model(input_id, attention_mask=mask).logits
+        batch_loss = loss_function(output, val_label)
     return batch_loss.cpu().detach(), output.cpu().detach(), val_label.cpu().detach()
 
 
@@ -110,7 +109,7 @@ def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, loss_f
                                                            opt.fp16)
         train_metrics_evaluator.append(train_loss, train_output, train_label)
 
-        if (iter_number + 1) % opt.save_every == 0:
+        if opt.save_every and (iter_number + 1) % opt.save_every == 0:
             torch.save(model.state_dict(),
                        os.path.join(opt.output_dir, f'{opt.model_comment}_iter_{iter_number}.bin'))
 
@@ -118,7 +117,7 @@ def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, loss_f
             validate_metrics_evaluator = MetricsEvaluator(opt.metrics)
             for validate_batch in validate_loader:
                 validate_loss, validate_output, validate_label = validate_step(model, loss_function, validate_batch,
-                                                                               device, opt.fp16)
+                                                                               device)
                 validate_metrics_evaluator.append(validate_loss, validate_output, validate_label)
             train_metrics = train_metrics_evaluator.compute_metrics()
             validate_metrics = validate_metrics_evaluator.compute_metrics()
@@ -161,7 +160,11 @@ def main():
                                    tokenizer,
                                    opt.max_length,
                                    opt.use_cache)
-    validate_dataset = LabeledDataset(validate_df['review_text'], validate_df['review_type'], tokenizer, opt.max_length)
+    validate_dataset = LabeledDataset(validate_df['review_text'],
+                                      validate_df['review_type'],
+                                      tokenizer,
+                                      opt.max_length,
+                                      opt.use_cache)
 
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True)
     valid_loader = torch.utils.data.DataLoader(validate_dataset, batch_size=opt.batch_size)

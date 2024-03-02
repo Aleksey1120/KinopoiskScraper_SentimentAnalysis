@@ -31,7 +31,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument('--verbose', type=int, default=0, help='Controls the verbosity')
         parser.add_argument('--save_best_model', action='store_true',
                             help='Save best model')
-        parser.add_argument('--save_every', type=int, default=100,
+        parser.add_argument('--save_every', type=int, default=None,
                             help='Save checkpoint every k iters')
         parser.add_argument('--model_comment', type=str, required=True, help='Model comment')
         parser.add_argument(
