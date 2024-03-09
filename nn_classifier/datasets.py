@@ -3,11 +3,16 @@ import os.path
 import torch
 from diskcache import Cache
 
+CACHE_SIZE = 24e6
+
 
 class TokensCache:
 
     def __init__(self, tokenizer, max_length):
         self.cache = Cache(os.path.join('cache_dir', tokenizer.name_or_path, str(max_length)))
+        self.cache.reset('size_limit', CACHE_SIZE)
+        self.cache.reset('cull_limit', 0)
+
         self.tokenizer = tokenizer
         self.max_length = max_length
 
