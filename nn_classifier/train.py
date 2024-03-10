@@ -42,8 +42,6 @@ def train_step(model, optimizer, loss_function, batch, device, fp16):
     mask = mask.to(device)
     input_id = input_id.squeeze(1).to(device)
     train_label = train_label.to(device)
-    train_label = torch.zeros(train_label.shape[0],
-                              3, device=device).scatter_(1, train_label.unsqueeze(1).type(torch.int64), 1.0)
 
     with torch.cuda.amp.autocast(enabled=fp16):
         output = model(input_id, attention_mask=mask).logits
@@ -66,8 +64,6 @@ def validate_step(model, loss_function, batch, device):
         mask = mask.to(device)
         input_id = input_id.squeeze(1).to(device)
         val_label = val_label.to(device)
-        val_label = torch.zeros(val_label.shape[0], 3,
-                                device=device).scatter_(1, val_label.unsqueeze(1).type(torch.int64), 1.0)
         output = model(input_id, attention_mask=mask).logits
         batch_loss = loss_function(output, val_label)
     return batch_loss.cpu().detach(), output.cpu().detach(), val_label.cpu().detach()

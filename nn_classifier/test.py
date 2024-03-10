@@ -36,8 +36,6 @@ def test(opt, model, test_loader, loss_function, device):
             mask = mask.to(device)
             input_id = input_id.squeeze(1).to(device)
             label = label.to(device)
-            label = torch.zeros(label.shape[0], 3,
-                                device=device).scatter_(1, label.unsqueeze(1).type(torch.int64), 1.0)
 
             with torch.cuda.amp.autocast(enabled=opt.fp16, dtype=torch.float16):
                 output = model(input_id, attention_mask=mask).logits
