@@ -91,7 +91,7 @@ def print_result_table_headers(required_metrics):
     print(f'|     Iters     |   Time   |' + ''.join(metric_headers))
 
 
-def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, loss_function, device):
+def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, scheduler, loss_function, device):
     start_time = time.time()
     iter_start_time = time.time()
     early_stopping = EarlyStopping(model, opt)
@@ -133,6 +133,7 @@ def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, loss_f
 
             if early_stopping(validate_metrics):
                 break
+            scheduler.step()
 
     early_stopping.rename_file()
     if opt.verbose >= 1:
@@ -173,6 +174,7 @@ def main():
 
     model = model.to(device)
     optimizer = Adam(model.parameters(), lr=opt.lr)
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=opt.gamma)
     loss_function = nn.CrossEntropyLoss(weight=class_weights if opt.balanced else None).to(device)
 
     if opt.verbose >= 1:
@@ -180,7 +182,7 @@ def main():
               f'Train size: {train_df.shape[0]} '
               f'Validate size: {validate_df.shape[0]}')
         train_options.print_options()
-    train(opt, model, train_fetcher, valid_loader, optimizer, loss_function, device)
+    train(opt, model, train_fetcher, valid_loader, optimizer, scheduler, loss_function, device)
 
 
 if __name__ == '__main__':
