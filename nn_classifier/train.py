@@ -71,19 +71,19 @@ def validate_step(model, loss_function, batch, device):
 
 def print_epoch_metrics(start_iter, end_iter, elapsed_time, train_metrics,
                         validate_metrics):
-    iters = f'{start_iter} - {end_iter}'
+    iters = f'{start_iter:>6} - {end_iter:<6}'
     metric_columns = []
     for metric_name in train_metrics.keys():
-        metric_columns.append(f'{train_metrics[metric_name]:^20.3f}|')
-        metric_columns.append(f'{validate_metrics[metric_name]:^20.3f}|')
-    print(f'|{iters:^15}|{elapsed_time:^10.2f}|' + ''.join(metric_columns))
+        metric_columns.append(f'{train_metrics[metric_name]:^26.3f}|')
+        metric_columns.append(f'{validate_metrics[metric_name]:^26.3f}|')
+    print(f'|{iters}|{elapsed_time:^10.2f}|' + ''.join(metric_columns))
 
 
 def print_result_table_headers(required_metrics):
     metric_headers = []
     for metric in required_metrics:
-        metric_headers.append(f'{f"Train {metric}":^20}|')
-        metric_headers.append(f'{f"Validate {metric}":^20}|')
+        metric_headers.append(f'{f"Train {metric}":^26}|')
+        metric_headers.append(f'{f"Validate {metric}":^26}|')
     print(f'|     Iters     |   Time   |' + ''.join(metric_headers))
 
 
@@ -139,7 +139,8 @@ def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, schedu
 def main():
     train_options = TrainOptions()
     opt = train_options.get_options()
-    set_seed(opt.seed)
+    if opt.seed is not None:
+        set_seed(opt.seed)
 
     device = torch.device('cuda' if torch.cuda.is_available() and opt.cuda else 'cpu')
 
@@ -174,9 +175,7 @@ def main():
     loss_function = nn.CrossEntropyLoss(weight=class_weights if opt.balanced else None).to(device)
 
     if opt.verbose >= 1:
-        print(f'Start {opt.model_comment} fitting. '
-              f'Train size: {train_df.shape[0]} '
-              f'Validate size: {validate_df.shape[0]}')
+        print(f'Train size: {train_df.shape[0]} Validate size: {validate_df.shape[0]}')
         train_options.print_options()
     train(opt, model, train_fetcher, valid_loader, optimizer, scheduler, loss_function, device)
 
