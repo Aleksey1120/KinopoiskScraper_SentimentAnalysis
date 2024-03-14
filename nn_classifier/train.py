@@ -172,7 +172,8 @@ def main():
     model = model.to(device)
     optimizer = Adam(model.parameters(), lr=opt.lr)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=opt.gamma)
-    loss_function = nn.CrossEntropyLoss(weight=class_weights if opt.balanced else None).to(device)
+    loss_function = nn.CrossEntropyLoss(weight=class_weights if opt.balanced else None,
+                                        label_smoothing=opt.label_smoothing).to(device)
 
     if opt.verbose >= 1:
         print(f'Train size: {train_df.shape[0]} Validate size: {validate_df.shape[0]}')

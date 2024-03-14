@@ -62,6 +62,8 @@ class TrainOptions(BaseOptions):
                             help='TensorBoard comment. If not given, current time')
         parser.add_argument('--lr', default=1e-6, type=float, help='Learning rate')
         parser.add_argument('--gamma', default=1.0, type=float, help='Gamma for exponential scheduler')
+        parser.add_argument('--label_smoothing', default=0.0, type=float,
+                            help='Specifies the amount of smoothing when computing the loss.')
         parser.add_argument('--balanced', action='store_true', help='Use balanced class weights')
         parser.add_argument('--use_cache', action='store_true', help='Use tokens caching')
 

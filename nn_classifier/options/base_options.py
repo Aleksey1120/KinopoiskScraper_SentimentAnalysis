@@ -40,7 +40,6 @@ class BaseOptions:
         return self.options
 
     def print_options(self):
-        print(self.options)
         print('       Option               Value        ')
         for k, v in self.options.__dict__.items():
             print(f'{k:<20}{str(v):<21}')
