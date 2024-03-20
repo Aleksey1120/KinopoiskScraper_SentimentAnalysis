@@ -18,6 +18,7 @@ class BaseOptions:
         parser.add_argument('--seed', type=int, default=None,
                             help='Enables repeatable experiments by setting the seed for the random.')
         parser.add_argument('--batch_size', type=int, default=16, help='Batch size')
+        parser.add_argument('--num_workers', type=int, default=0, help='Num workers for DataLoader')
         parser.add_argument('--max_length', type=int, default=512,
                             help='Max sequence length')
         parser.add_argument('--metrics', nargs='+', default=['loss'], help='Tracked metrics')

@@ -1,4 +1,6 @@
 import random
+import time
+
 import numpy as np
 import pandas as pd
 import torch
@@ -29,6 +31,7 @@ def print_metrics(metrics):
 
 def test(opt, model, test_loader, loss_function, device):
     model.eval()
+    start = time.time()
     metrics_evaluator = MetricsEvaluator(opt.metrics)
     with torch.no_grad():
         for batch in test_loader:
@@ -45,12 +48,14 @@ def test(opt, model, test_loader, loss_function, device):
                                      label.cpu().detach())
     computed_metrics = metrics_evaluator.compute_metrics()
     print_metrics(computed_metrics)
+    print(f'Time: {time.time() - start:.2f}.')
 
 
 def main():
     train_options = TestOptions()
     opt = train_options.get_options()
-    set_seed(opt.seed)
+    if opt.seed is not None:
+        set_seed(opt.seed)
 
     device = torch.device('cuda' if torch.cuda.is_available() and opt.cuda else 'cpu')
 
@@ -59,7 +64,7 @@ def main():
 
     test_df = pd.read_csv(opt.test_data)
     test_dataset = LabeledDataset(test_df['review_text'], test_df['review_type'], tokenizer, opt.max_length)
-    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=opt.batch_size, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=opt.batch_size, num_workers=opt.num_workers)
 
     model = model.to(device)
     loss_function = loss_function.to(device)

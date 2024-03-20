@@ -164,8 +164,13 @@ def main():
                                       opt.max_length,
                                       opt.use_cache)
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=opt.batch_size, shuffle=True)
-    valid_loader = torch.utils.data.DataLoader(validate_dataset, batch_size=opt.batch_size)
+    train_loader = torch.utils.data.DataLoader(train_dataset,
+                                               batch_size=opt.batch_size,
+                                               shuffle=True,
+                                               num_workers=opt.num_workers)
+    valid_loader = torch.utils.data.DataLoader(validate_dataset,
+                                               batch_size=opt.batch_size,
+                                               num_workers=opt.num_workers)
 
     train_fetcher = Fetcher(train_loader)
 
