@@ -57,15 +57,16 @@ def train_step(model, optimizer, loss_function, batch, device, fp16):
     return batch_loss.cpu().detach(), output.cpu().detach(), train_label.cpu().detach()
 
 
-def validate_step(model, loss_function, batch, device):
+def validate_step(model, loss_function, batch, device, fp16):
+    model.eval()
     with torch.no_grad():
-        model.eval()
         input_id, mask, val_label = batch
         mask = mask.to(device)
         input_id = input_id.squeeze(1).to(device)
         val_label = val_label.to(device)
-        output = model(input_id, attention_mask=mask).logits
-        batch_loss = loss_function(output, val_label)
+        with torch.cuda.amp.autocast(enabled=fp16, dtype=torch.float16):
+            output = model(input_id, attention_mask=mask).logits
+            batch_loss = loss_function(output, val_label)
     return batch_loss.cpu().detach(), output.cpu().detach(), val_label.cpu().detach()
 
 
@@ -113,7 +114,7 @@ def train(opt, model, train_fetcher: Fetcher, validate_loader, optimizer, schedu
             validate_metrics_evaluator = MetricsEvaluator(opt.metrics)
             for validate_batch in validate_loader:
                 validate_loss, validate_output, validate_label = validate_step(model, loss_function, validate_batch,
-                                                                               device)
+                                                                               device, opt.fp16)
                 validate_metrics_evaluator.append(validate_loss, validate_output, validate_label)
             train_metrics = train_metrics_evaluator.compute_metrics()
             validate_metrics = validate_metrics_evaluator.compute_metrics()
