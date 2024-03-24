@@ -54,6 +54,3 @@ class Model:
             'confidences': confidence,
             'probabilities': dict(zip(config["CLASS_NAMES"], probabilities.T.tolist())),
         }
-
-
-model = Model()

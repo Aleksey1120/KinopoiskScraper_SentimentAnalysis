@@ -2,9 +2,16 @@ from typing import Dict
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from model import model
+from model import Model
 
 app = FastAPI()
+model = None
+
+
+@app.on_event('startup')
+def startup_event():
+    global model
+    model = Model()
 
 
 class SentimentRequest(BaseModel):
