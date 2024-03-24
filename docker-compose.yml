@@ -1,0 +1,14 @@
+services:
+  classifier-app:
+    build: /app/classifier_app/
+    container_name: classifier-app
+    restart: unless-stopped
+  bot-app:
+    build: /app/bot_app/
+    container_name: bot-app
+    restart: unless-stopped
+    environment:
+      - TOKEN=${TOKEN}
+      - CLASSIFIER_URL=${CLASSIFIER_URL}
+    depends_on:
+      - classifier-app
