@@ -3,6 +3,8 @@ services:
     build: /app/classifier_app/
     container_name: classifier-app
     restart: unless-stopped
+    volumes:
+      - models:/app/models
   bot-app:
     build: /app/bot_app/
     container_name: bot-app
@@ -12,3 +14,5 @@ services:
       - CLASSIFIER_URL=${CLASSIFIER_URL}
     depends_on:
       - classifier-app
+volumes:
+  models:
