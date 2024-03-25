@@ -6,8 +6,8 @@ from utils import train_validate_test_split
 class TestTrainValidateTestSplit(TestCase):
     def test_stratify(self):
         row_count = 10000
-        eps = 0.05
-        x = np.random.randint(0, 3, row_count) % 2
+        eps = 0.005
+        x = (np.random.randint(0, 20, row_count) == 13).astype(int)
         y = x.copy()
         y_class_1, y_class_2 = np.unique(y, return_counts=True)[1]
         x_train, x_validate, x_test, y_train, y_validate, y_test = train_validate_test_split(x, y, train_size=.33,
@@ -17,9 +17,10 @@ class TestTrainValidateTestSplit(TestCase):
         y_train_class_1, y_train_class_2 = np.unique(y_train, return_counts=True)[1]
         y_validate_class_1, y_validate_class_2 = np.unique(y_train, return_counts=True)[1]
         y_test_class_1, y_test_class_2 = np.unique(y_train, return_counts=True)[1]
-        self.assertTrue((y_class_1 / y_class_2 - y_train_class_1 / y_train_class_2) < eps)
-        self.assertTrue((y_class_1 / y_class_2 - y_validate_class_1 / y_validate_class_2) < eps)
-        self.assertTrue((y_class_1 / y_class_2 - y_test_class_1 / y_test_class_2) < eps)
+
+        self.assertTrue(np.abs(1 - (y_class_1 / y_class_2) / (y_train_class_1 / y_train_class_2)) < eps)
+        self.assertTrue(np.abs(1 - (y_class_1 / y_class_2) / (y_validate_class_1 / y_validate_class_2)) < eps)
+        self.assertTrue(np.abs(1 - (y_class_1 / y_class_2) / (y_test_class_1 / y_test_class_2)) < eps)
 
         self.assertTrue(np.all(x_train == y_train))
         self.assertTrue(np.all(x_validate == y_validate))
