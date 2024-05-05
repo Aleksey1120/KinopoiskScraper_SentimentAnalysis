@@ -104,7 +104,7 @@ It has several advantages:
 
 The distribution of text lengths is shown in the diagram below
 
-![plot](../imgs/Figure_1.png)
+![plot](../images/Figure_1.png)
 
 So a decision was made to compare performance of rubert-tiny2 with different sequence size. The table below shows it.
 
