@@ -1,12 +1,13 @@
 import json
 import os
-from dataset import InferenceDataset
 
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from transformers import logging
 import gdown
 import torch
 from torch.utils.data import DataLoader
-from transformers import logging
+
+from dataset import InferenceDataset
 
 logging.set_verbosity_error()
 

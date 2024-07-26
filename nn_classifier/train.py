@@ -1,13 +1,15 @@
 import os
 import random
 import time
+
 import numpy as np
 import pandas as pd
-import torch
 from sklearn.utils import compute_class_weight
+import torch
 from torch import nn
 from torch.optim import Adam
 from torch.utils.tensorboard import SummaryWriter
+from transformers import logging
 
 from nn_classifier.early_stopping import EarlyStopping
 from nn_classifier.options.train_options import TrainOptions
@@ -15,7 +17,6 @@ from nn_classifier.model import get_model_and_tokenizer
 from nn_classifier.datasets import LabeledDataset, Fetcher
 from nn_classifier.metrics_evaluator import MetricsEvaluator
 
-from transformers import logging
 
 logging.set_verbosity_error()
 

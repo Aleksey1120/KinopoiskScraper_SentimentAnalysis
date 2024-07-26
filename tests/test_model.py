@@ -1,12 +1,12 @@
-import pandas as pd
-import numpy as np
-
 import sys
 
 sys.path.append('app/classifier_app')
 
-from app.classifier_app.model import Model
+import pandas as pd
+import numpy as np
 from unittest import TestCase
+
+from app.classifier_app.model import Model
 
 
 class TestModel(TestCase):

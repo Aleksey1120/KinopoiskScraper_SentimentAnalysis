@@ -6,13 +6,13 @@ import pandas as pd
 import torch
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
+from transformers import logging
 
 from nn_classifier.options.test_options import TestOptions
 from nn_classifier.model import get_model_and_tokenizer
 from nn_classifier.datasets import LabeledDataset
 from nn_classifier.metrics_evaluator import MetricsEvaluator
 
-from transformers import logging
 
 logging.set_verbosity_error()
 

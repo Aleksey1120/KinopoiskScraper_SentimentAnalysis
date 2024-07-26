@@ -1,12 +1,13 @@
-from selenium.webdriver.remote.webdriver import WebDriver
-
-from selenium.webdriver.common.by import By
-from kinopoisk_scraper import constants as const
-from kinopoisk_scraper.review import Review
 import time
 import re
 import random
 import logging
+
+from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.common.by import By
+
+from kinopoisk_scraper import constants as const
+from kinopoisk_scraper.review import Review
 
 logger = logging.getLogger('logger')
 

@@ -1,7 +1,8 @@
-import telebot
-import requests
 import os
 import json
+
+import telebot
+import requests
 
 bot = telebot.TeleBot(os.environ['TOKEN'])
 

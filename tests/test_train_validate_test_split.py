@@ -1,6 +1,6 @@
 from unittest import TestCase
 import numpy as np
-from utils import train_validate_test_split
+from notebooks.utils import train_validate_test_split
 
 
 class TestTrainValidateTestSplit(TestCase):
