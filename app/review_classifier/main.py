@@ -46,7 +46,6 @@ async def main():
         while True:
             messages = consumer.poll(1000, max_records=max_poll_records)
             if messages:
-                print(len(list(*messages.values())))
                 texts = []
                 keys = []
                 for tp, msgs in messages.items():

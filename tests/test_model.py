@@ -1,12 +1,11 @@
 import sys
 
-sys.path.append('app/classifier_app')
+sys.path.append('app/review_classifier')
 
-import pandas as pd
 import numpy as np
 from unittest import TestCase
 
-from app.classifier_app.model import Model
+from app.review_classifier.model import Model
 
 
 class TestModel(TestCase):
@@ -17,19 +16,20 @@ class TestModel(TestCase):
         reviews = ['Очень хороший фильм. Рекомендую.',
                    'Захватывающее начало, но скомканный финал.',
                    'Скучный сюжет, шаблонные персонажи, предсказуемый финал. Не тратьте время.']
+        expected_sentiment = ['positive', 'neutral', 'negative']
 
-        predict = model.predict(reviews)
-        self.assertTrue('sentiments' in predict)
-        self.assertTrue('confidences' in predict)
-        self.assertTrue('probabilities' in predict)
+        predicts = model.predict(reviews)
+        self.assertTrue(len(predicts) == len(reviews))
+        for predict, expected in zip(predicts, expected_sentiment):
+            self.assertTrue('sentiment' in predict)
+            self.assertTrue('confidence' in predict)
+            self.assertTrue('probability' in predict)
 
-        self.assertTrue(predict['sentiments'] == ['positive', 'neutral', 'negative'])
-        self.assertTrue(len(predict['confidences']) == 3)
-        self.assertTrue(all([pred > 0.33 for pred in predict['confidences']]))
+            self.assertTrue(predict['sentiment'] == expected)
 
-        probabilities = pd.DataFrame(predict['probabilities'])
-        self.assertTrue(probabilities.shape == (3, 3))
-        self.assertTrue(set(probabilities.columns) == {'negative', 'neutral', 'positive'})
-        self.assertTrue(np.all(np.abs(np.sum(probabilities, axis=1) - 1.0) < eps))
+            self.assertTrue(np.abs(sum(predict['probability'].values()) - 1.0) < eps)
 
-        self.assertTrue(np.all(np.abs(probabilities.max(axis=1) - predict['confidences']) < eps))
+            max_class = max(predict['probability'].items(), key=lambda x: x[1])
+
+            self.assertTrue(max_class[0] == predict['sentiment'])
+            self.assertTrue(max_class[1] == predict['confidence'])

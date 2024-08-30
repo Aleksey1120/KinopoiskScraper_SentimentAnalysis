@@ -2,6 +2,8 @@ import json
 import os
 import time
 
+import numpy as np
+import pandas as pd
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from transformers import logging
 import gdown
@@ -62,11 +64,3 @@ class Model:
             })
 
         return results
-
-
-if __name__ == '__main__':
-    m = Model()
-    t1 = time.time()
-    for _ in range(1):
-        m.predict(['Какой-то текст.'] * 10000)
-    print(time.time() - t1)
