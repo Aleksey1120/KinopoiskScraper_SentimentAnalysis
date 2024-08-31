@@ -24,4 +24,4 @@ The project follows a modular structure, with each component organized into sepa
 
 - tests: unit tests for project modules.
 
-More details see in [nn_classifier/README.md](nn_classifier/README.md), [app/README.md](app/README.md) and [kinopoisk_scaper/README.md](kinopoisk_scraper/README.md)
+More details see in [nn_classifier/README.md](nn_classifier/README.md), [apps/README.md](apps/README.md) and [kinopoisk_scaper/README.md](kinopoisk_scraper/README.md)

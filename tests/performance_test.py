@@ -2,13 +2,13 @@ import asyncio
 import time
 import sys
 
-sys.path.append('app/review_classifier')
+sys.path.append('apps/review_classifier')
 
 import aiohttp
 import numpy as np
 import pandas as pd
 
-from app.review_classifier.model import config
+from apps.review_classifier.model import config
 
 num_concurrent_requests = 10
 n_iter = 10
@@ -52,7 +52,7 @@ async def main():
           f'Total time: {t_end - t_start:.2f}.\n'
           f'RPS {num_concurrent_requests * n_iter / (t_end - t_start):.2f}.\n'
           f'Successful: {successful_requests}({successful_requests / (num_concurrent_requests * n_iter):.1%}).\n'
-          f'Correct: {correct_predictions}({correct_predictions / (num_concurrent_requests * n_iter):.1%}).\n')
+          f'Correct: {correct_predictions}({correct_predictions / (num_concurrent_requests * n_iter):.1%}).')
 
 
 if __name__ == '__main__':

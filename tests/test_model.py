@@ -1,11 +1,11 @@
 import sys
 
-sys.path.append('app/review_classifier')
+sys.path.append('apps/review_classifier')
 
 import numpy as np
 from unittest import TestCase
 
-from app.review_classifier.model import Model
+from apps.review_classifier.model import Model
 
 
 class TestModel(TestCase):
