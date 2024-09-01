@@ -1,0 +1,5 @@
+gdown==5.1.0
+transformers==4.29.2
+redis==5.0.8
+kafka-python==2.0.2
+numpy==1.26.4
