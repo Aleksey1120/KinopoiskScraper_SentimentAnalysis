@@ -1,18 +1,60 @@
+version: "3"
 services:
-  classifier-app:
-    build: /app/classifier_app/
-    container_name: classifier-app
+  redis:
+    image: redis:latest
     restart: unless-stopped
-    volumes:
-      - models:/app/models
-  bot-app:
-    build: /app/bot_app/
-    container_name: bot-app
+
+  zookeeper:
+    image: bitnami/zookeeper:latest
     restart: unless-stopped
     environment:
-      - TOKEN=${TOKEN}
-      - CLASSIFIER_URL=${CLASSIFIER_URL}
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka:
+    image: bitnami/kafka:latest
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=${ZOOKEEPER_HOST}:${ZOOKEEPER_PORT}
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092,EXTERNAL://kafka:9093
+      - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+    restart: unless-stopped
     depends_on:
-      - classifier-app
+      - ${ZOOKEEPER_HOST}
+
+  review_service:
+    build:
+      context: .
+      dockerfile: apps/review_service/Dockerfile
+    restart: unless-stopped
+    environment:
+      - REQUEST_TOPIC=${REQUEST_TOPIC}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - KAFKA_HOST=${KAFKA_HOST}
+      - KAFKA_PORT=${KAFKA_PORT}
+    depends_on:
+      - ${KAFKA_HOST}
+      - ${REDIS_HOST}
+    ports:
+      - "8080:8080"
+
+  review_classifier:
+    build:
+      context: .
+      dockerfile: apps/review_classifier/Dockerfile
+    restart: unless-stopped
+    volumes:
+      - models:/apps/review_classifier/models
+    environment:
+      - REQUEST_TOPIC=${REQUEST_TOPIC}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - KAFKA_HOST=${KAFKA_HOST}
+      - KAFKA_PORT=${KAFKA_PORT}
+    depends_on:
+      - ${KAFKA_HOST}
+      - ${REDIS_HOST}
 volumes:
-  models:
+    models:

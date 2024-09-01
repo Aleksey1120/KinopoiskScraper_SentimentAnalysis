@@ -1,40 +1,32 @@
-import json
 import os
-import time
 
-import numpy as np
-import pandas as pd
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from transformers import logging
 import gdown
 import torch
 from torch.utils.data import DataLoader
 
-from dataset import InferenceDataset
+from apps.review_classifier.dataset import InferenceDataset
+from apps.review_classifier import config
 
 logging.set_verbosity_error()
-
-current_dir = os.path.dirname(os.path.realpath(__file__))
-config_path = os.path.join(current_dir, 'config.json')
-with open(config_path) as json_file:
-    config = json.load(json_file)
 
 
 class Model:
     def __init__(self):
-        self.device = torch.device(config['DEVICE'] if torch.cuda.is_available() else 'cpu')
-        self.tokenizer = AutoTokenizer.from_pretrained(config['MODEL_NAME'])
-        self.max_length = config['MAX_LENGTH']
-        self.batch_size = config['BATCH_SIZE']
-        self.classifier = AutoModelForSequenceClassification.from_pretrained(config['MODEL_NAME'], num_labels=3)
+        self.device = torch.device(config.DEVICE if torch.cuda.is_available() else 'cpu')
+        self.tokenizer = AutoTokenizer.from_pretrained(config.MODEL_NAME)
+        self.max_length = config.MAX_LENGTH
+        self.batch_size = config.BATCH_SIZE
+        self.classifier = AutoModelForSequenceClassification.from_pretrained(config.MODEL_NAME, num_labels=3)
         self.classifier = self.classifier.to(self.device)
-        if not os.path.exists('models'):
-            os.mkdir('models')
-        full_path = os.path.join('models', config['PRE_TRAINED_MODEL'])
+        if not os.path.exists(config.MODEL_DIR):
+            os.makedirs(config.MODEL_DIR)
+        full_path = os.path.join(config.MODEL_DIR, config.PRE_TRAINED_MODEL)
         if not os.path.exists(full_path):
-            if not config['GDRIVE_URL']:
+            if not config.GDRIVE_URL:
                 raise ValueError('No model checkpoint.')
-            gdown.download(config['GDRIVE_URL'], full_path, fuzzy=True)
+            gdown.download(config.GDRIVE_URL, full_path, fuzzy=True)
         self.classifier.load_state_dict(torch.load(full_path, map_location=self.device))
         self.classifier.eval()
 
@@ -58,9 +50,9 @@ class Model:
         results = []
         for predicted_class, confidence, probas in zip(predicted_classes, confidences, probabilities):
             results.append({
-                'sentiment': config['CLASS_NAMES'][predicted_class],
+                'sentiment': config.CLASS_NAMES[predicted_class],
                 'confidence': confidence,
-                'probability': dict(zip(config['CLASS_NAMES'], probas))
+                'probability': dict(zip(config.CLASS_NAMES, probas))
             })
 
         return results

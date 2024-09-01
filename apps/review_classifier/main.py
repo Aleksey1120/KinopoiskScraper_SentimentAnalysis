@@ -1,23 +1,21 @@
 import asyncio
 import json
+import os
 
 from kafka import KafkaConsumer
 import redis.asyncio as aioredis
 
-from model import Model
+from apps.review_classifier.model import Model
+from apps.review_classifier.config import TTL, MAX_POLL_RECORDS, CLIENT_ID, GROUP_ID
 
-topic_name = 'classification_request'
-client_id = 'client_1'
-group_id = 'group_1'
-kafka_server = 'localhost:9092'
-redis_url = 'redis://localhost:6379'
-max_poll_records = 64
-ttl = 60 * 15
+topic_name = os.getenv('REQUEST_TOPIC')
+kafka_url = f'{os.getenv("KAFKA_HOST")}:{os.getenv("KAFKA_PORT")}'
+redis_url = f'redis://{os.getenv("REDIS_HOST")}:{os.getenv("REDIS_PORT")}'
 
 
 async def publish_result(key, result, redis_client):
     await redis_client.xadd(key, {'result': json.dumps(result)})
-    await redis_client.expire(key, ttl)
+    await redis_client.expire(key, TTL)
 
 
 async def publish_results(keys, results, redis_client):
@@ -30,12 +28,12 @@ async def publish_results(keys, results, redis_client):
 
 async def main():
     consumer = KafkaConsumer(
-        client_id=client_id,
-        group_id=group_id,
-        bootstrap_servers=kafka_server,
+        client_id=CLIENT_ID,
+        group_id=GROUP_ID,
+        bootstrap_servers=kafka_url,
         key_deserializer=lambda k: k.decode(),
         value_deserializer=lambda v: v.decode(),
-        max_poll_records=max_poll_records,
+        max_poll_records=MAX_POLL_RECORDS,
         auto_offset_reset='latest'
     )
     consumer.subscribe([topic_name])
@@ -44,7 +42,7 @@ async def main():
     classification_model = Model()
     try:
         while True:
-            messages = consumer.poll(1000, max_records=max_poll_records)
+            messages = consumer.poll(1000, max_records=MAX_POLL_RECORDS)
             if messages:
                 texts = []
                 keys = []

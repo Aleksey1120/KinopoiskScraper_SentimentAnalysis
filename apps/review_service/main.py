@@ -1,4 +1,5 @@
 import json
+import os
 import uuid
 from typing import Dict
 
@@ -8,9 +9,9 @@ from pydantic import BaseModel
 from aiokafka import AIOKafkaProducer
 from redis import asyncio as aioredis
 
-classification_request_topic = 'classification_request'
-kafka_server = 'localhost:9092'
-redis_url = 'redis://localhost:6379'
+topic_name = os.getenv('REQUEST_TOPIC')
+kafka_url = f'{os.getenv("KAFKA_HOST")}:{os.getenv("KAFKA_PORT")}'
+redis_url = f'redis://{os.getenv("REDIS_HOST")}:{os.getenv("REDIS_PORT")}'
 
 app = FastAPI()
 kafka_producer = None
@@ -31,14 +32,14 @@ class SentimentResponse(BaseModel):
 async def startup_event():
     global kafka_producer, redis_client
 
+    redis_client = await aioredis.from_url(redis_url)
+
     kafka_producer = AIOKafkaProducer(
-        bootstrap_servers=kafka_server,
+        bootstrap_servers=kafka_url,
         key_serializer=lambda k: k.encode(),
         value_serializer=lambda v: v.encode(),
     )
     await kafka_producer.start()
-
-    redis_client = await aioredis.from_url(redis_url)
 
 
 @app.on_event('shutdown')
@@ -54,7 +55,7 @@ async def shutdown_event():
 
 async def publish_classification_request(text, key):
     await kafka_producer.send_and_wait(
-        classification_request_topic,
+        topic_name,
         key=key,
         value=text
     )
