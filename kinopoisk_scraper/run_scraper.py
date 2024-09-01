@@ -2,14 +2,16 @@ import glob
 import os.path
 import pickle
 import time
+import logging
 
 from selenium import webdriver
 from fake_useragent import UserAgent
+
 from kinopoisk_scraper.kinopoisk_scraper import KinopoiskScraper
 from kinopoisk_scraper.film import Film
 from kinopoisk_scraper.processor import ReviewProcessor
 from kinopoisk_scraper import constants as const
-import logging
+
 
 logger = logging.getLogger('logger')
 logger.setLevel(logging.INFO)
