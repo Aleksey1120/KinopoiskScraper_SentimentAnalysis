@@ -8,17 +8,15 @@ The project utilizes a combination of web scraping, machine learning, and deep l
 
 The project follows a modular structure, with each component organized into separate directories:
 
-- app: contains code for applications.
+- apps: contains code for applications.
 
-    - bot_app: code for telebot.
+    - review_classifier: code for classification.
 
-    - classifier_app: code for the classifier API.
+    - review_service: code for API.
 
 - kinopoisk_scraper: code for scraping and processing Kinopoisk movie reviews.
 
 - nn_classifier: code for the neural network classifier used for sentiment analysis.
-
-- data: stores data.
 
 - notebooks: jupyter notebooks.
 

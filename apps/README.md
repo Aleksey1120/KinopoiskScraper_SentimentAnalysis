@@ -1,52 +1,54 @@
-# App
+# Apps
 
-This module contains applications that interact with the sentiment analysis models trained in the nn_classifier module.
+This package consists of two microservices designed to work together for the classification of reviews.
+The system is built using Python, with communication between services handled via Kafka and Redis.
 
-## Applications
+## Services
 
-classifier_app: run a web server that provides an API for accessing the sentiment analysis models. You can use this API to integrate sentiment analysis into other applications or services.
+review_service:
 
-bot_app: run a Telegram bot that allows users to request sentiment analysis of movie reviews directly through the Telegram interface.
+- This is the FastAPI-based web server that handles incoming classification requests.
+- It sends review texts to Kafka for processing and retrieves the classification results from Redis.
+
+review_classifier:
+- This service is responsible for performing the actual classification using a neural network.
+- It subscribes to Kafka topics to receive review texts, processes them, and stores the results in Redis.
+
+## Setup
+
+From the root directory, run the following command to build and start the services using Docker Compose:
+
+```
+docker-compose build
+docker-compose up -d
+```
 
 ## Usage
 
-### classifier_app
+Send a POST request to the Review Service's /predict endpoint with the review text. Example using requests lib:
 
-To run locally, you can use commands:
 ```
-cd app/classifier_app
-uvicorn api:app --host 0.0.0.0 --port 8080
+import requests
+response = requests.post('http://localhost:8080/predict', json={'text': 'Your review text here'})
+print(response.json())
 ```
-Running in docker container:
+Response example:
 ```
-docker build -t classifier_app ./app/classifier_app
-docker run -p 8080:8080 classifier_app
-```
-### bot_app
-
-To run locally, you can use commands:
-```
-cd app/bot_app
-python api.py
-```
-The application uses the TOKEN and CLASSIFIER_URL environment variables.
-
-Running in docker container:
-```
-docker build -t bot_app ./app/bot_app
-docker run -p 8080:8080 -e TOKEN=token -e CLASSIFIER_URL=classifier_url bot_app
+{
+    'sentiment': 'positive',
+    'confidence': 0.517476499080658,
+    'probability': 
+    {
+        'negative': 0.00668255053460598,
+        'neutral': 0.4758409261703491,
+        'positive': 0.517476499080658
+    }
+}
 ```
 
-### Docker compose
+## Testing
 
-You can run both applications using Docker Compose.
-
-1. Create .env file in the root directory of the project with two variables:
+The project includes tests to ensure that the services are functioning as expected. To run the tests:
 ```
-TOKEN=your_bot_token
-CLASSIFIER_URL=http://classifier_app:8080/
-```
-2. Run command
-```
-docker compose up
+python -m  unittest discover tests 
 ```
